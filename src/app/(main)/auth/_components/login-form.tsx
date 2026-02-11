@@ -1,10 +1,15 @@
 "use client";
 
+import { useState } from "react";
+
+import { useRouter } from "next/navigation";
+
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
+import { loginAction } from "@/app/actions/auth-actions";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -17,6 +22,10 @@ const FormSchema = z.object({
 });
 
 export function LoginForm() {
+  const router = useRouter();
+  const [status, setStatus] = useState("");
+  const [loading, setLoading] = useState(false);
+
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
@@ -34,6 +43,23 @@ export function LoginForm() {
         </pre>
       ),
     });
+
+    setLoading(true);
+    setStatus("Iniciando sesión...");
+
+    const loginResult = await loginAction(data.email, data.password);
+
+    if (!loginResult.success) {
+      setStatus("❌ Error login: " + loginResult.error);
+      setLoading(false);
+      return;
+    }
+
+    setStatus("✅ Login exitoso");
+    setLoading(false);
+
+    // Redirigir al dashboard después del login exitoso
+    router.push("/dashboard/default");
   };
 
   return (
